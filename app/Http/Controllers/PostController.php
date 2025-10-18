@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Post;
 use App\Models\Comment;
-use Illuminate\Http\Request;
+use App\Models\Post;
 
 class PostController extends Controller
 {
     public function index()
     {
-        $data = Post::all();
+        // Eager load comments to avoid N+1 and ensure comments are available in the view
+        $data = Post::with('comments')->get();
+
         return view('post.index', ['posts' => $data]);
     }
 
@@ -22,14 +23,22 @@ class PostController extends Controller
             'author' => 'youssef',
             'published' => true,
         ]);
+
         return redirect('/blog');
     }
 
     public function show($id)
     {
 
-        $data = Post::findOrFail($id);
-        $commentData = Comment::find($data->id);
-        return view('post.show', ['post' => $data, 'comments' => $commentData]);
+        $post = Post::with('comments')->findOrFail($id);
+
+        // Pass the post; view can use $post->comments
+        return view('post.show', ['post' => $post]);
+    }
+
+        public function delete ($id)
+    {
+        Post::destroy($id);
+        
     }
 }
